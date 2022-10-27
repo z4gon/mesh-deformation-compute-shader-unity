@@ -5,6 +5,8 @@ using UnityEngine;
 public class ComputeShaderDispatcher : MonoBehaviour
 {
     public ComputeShader ComputeShader;
+    public float Radius = 0.8f;
+    public float Velocity = 1f;
 
     private MeshFilter _meshFilter;
     private MeshRenderer _meshRenderer;
@@ -58,8 +60,12 @@ public class ComputeShaderDispatcher : MonoBehaviour
 
         _kernelIndex = ComputeShader.FindKernel("DeformVertices");
 
+        // this will let compute shader access the buffers
         ComputeShader.SetBuffer(_kernelIndex, "InitialVertices", _initialVerticesBuffer);
         ComputeShader.SetBuffer(_kernelIndex, "DeformedVertices", _deformedVerticesBuffer);
+
+        // this will let the surface shader access the buffer
+        _meshRenderer.material.SetBuffer("DeformedVertices", _deformedVerticesBuffer);
     }
 
     private void InitializeIndirectArgsBuffer()
@@ -89,6 +95,9 @@ public class ComputeShaderDispatcher : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        ComputeShader.SetFloat("Time", Time.time);
+        ComputeShader.SetFloat("Radius", Radius);
+        ComputeShader.SetFloat("Velocity", Velocity);
         ComputeShader.Dispatch(_kernelIndex, _vertices.Length, 1, 1);
         Graphics.DrawMeshInstancedIndirect(
             mesh: _meshFilter.mesh,
@@ -97,5 +106,23 @@ public class ComputeShaderDispatcher : MonoBehaviour
             bounds: _bounds,
             bufferWithArgs: _argsBuffer
         );
+    }
+
+    void OnDestroy()
+    {
+        if (_initialVerticesBuffer != null)
+        {
+            _initialVerticesBuffer.Release();
+        }
+
+        if (_deformedVerticesBuffer != null)
+        {
+            _deformedVerticesBuffer.Release();
+        }
+
+        if (_argsBuffer != null)
+        {
+            _argsBuffer.Release();
+        }
     }
 }
