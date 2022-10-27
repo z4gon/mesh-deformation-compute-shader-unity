@@ -1,14 +1,13 @@
 using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter))]
 public class ComputeShaderDispatcher : MonoBehaviour
 {
     public Material Material;
+    public Mesh Mesh;
     public ComputeShader ComputeShader;
     public float Radius = 0.8f;
     public float Velocity = 1f;
 
-    private MeshFilter _meshFilter;
     private Vertex[] _vertices;
     private ComputeBuffer _initialVerticesBuffer;
     private ComputeBuffer _deformedVerticesBuffer;
@@ -24,8 +23,6 @@ public class ComputeShaderDispatcher : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _meshFilter = GetComponent<MeshFilter>();
-
         InitializeVertices();
         InitializeVertexBuffers();
         InitializeIndirectArgsBuffer();
@@ -35,17 +32,16 @@ public class ComputeShaderDispatcher : MonoBehaviour
 
     private void InitializeVertices()
     {
-        var mesh = _meshFilter.mesh;
-        _vertices = new Vertex[mesh.vertices.Length];
+        _vertices = new Vertex[Mesh.vertices.Length];
 
-        for (var i = 0; i < mesh.vertices.Length; i++)
+        for (var i = 0; i < Mesh.vertices.Length; i++)
         {
-            var v = mesh.vertices[i];
+            var v = Mesh.vertices[i];
 
             _vertices[i] = new Vertex
             {
-                position = mesh.vertices[i],
-                normal = mesh.normals[i]
+                position = Mesh.vertices[i],
+                normal = Mesh.normals[i]
             };
         }
     }
@@ -86,7 +82,7 @@ public class ComputeShaderDispatcher : MonoBehaviour
         // this will be used by the vertex/fragment shader
         // to get the instance_id and vertex_id
         var args = new int[_argsCount] {
-            (int)_meshFilter.mesh.GetIndexCount(0),     // indices of the mesh
+            (int)Mesh.GetIndexCount(0),     // indices of the mesh
             1,                                          // number of objects to render
             0,0,0                                       // unused args
         };
@@ -107,7 +103,7 @@ public class ComputeShaderDispatcher : MonoBehaviour
         ComputeShader.SetFloat("Velocity", Velocity);
         ComputeShader.Dispatch(_kernelIndex, _vertices.Length, 1, 1);
         Graphics.DrawMeshInstancedIndirect(
-            mesh: _meshFilter.mesh,
+            mesh: Mesh,
             submeshIndex: 0,
             material: Material,
             bounds: _bounds,
