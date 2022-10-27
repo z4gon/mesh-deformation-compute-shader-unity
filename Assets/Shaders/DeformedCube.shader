@@ -36,7 +36,7 @@ Shader "Unlit/DeformedCube"
                 Vertex v = DeformedVertices[index];
 
                 OUT.position = UnityObjectToClipPos(v.position);
-                OUT.normal = float4(v.normal, 1);
+                OUT.normal = float4(v.normal, 0);
 
                 // calculate lighting
                 float3 lightDirection = _WorldSpaceLightPos0.xyz;

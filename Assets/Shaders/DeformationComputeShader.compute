@@ -9,6 +9,7 @@ StructuredBuffer<Vertex> InitialVertices;
 RWStructuredBuffer<Vertex> DeformedVertices;
 float Time;
 float Radius;
+float Velocity;
 
 [numthreads(1,1,1)]
 void DeformVertices (uint3 id : SV_DispatchThreadID)
@@ -17,7 +18,7 @@ void DeformVertices (uint3 id : SV_DispatchThreadID)
     float3 spherePosition = normalize(v.position) * Radius;
     float3 sphereNormal = normalize(v.position) * Radius;
 
-    float progress = sin(Time);
+    float progress = (sin(Time * Velocity) / 2) + 0.5;
 
     v.position = lerp(spherePosition, v.position, progress);
     v.normal = lerp(sphereNormal, v.normal, progress);
