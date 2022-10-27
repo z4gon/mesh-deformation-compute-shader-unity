@@ -1,15 +1,14 @@
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
 public class ComputeShaderDispatcher : MonoBehaviour
 {
+    public Material Material;
     public ComputeShader ComputeShader;
     public float Radius = 0.8f;
     public float Velocity = 1f;
 
     private MeshFilter _meshFilter;
-    private MeshRenderer _meshRenderer;
     private Vertex[] _vertices;
     private ComputeBuffer _initialVerticesBuffer;
     private ComputeBuffer _deformedVerticesBuffer;
@@ -20,15 +19,18 @@ public class ComputeShaderDispatcher : MonoBehaviour
     private ComputeBuffer _argsBuffer;
     private Bounds _bounds;
 
+    private bool _isInitialized = false;
+
     // Start is called before the first frame update
     void Start()
     {
         _meshFilter = GetComponent<MeshFilter>();
-        _meshRenderer = GetComponent<MeshRenderer>();
 
         InitializeVertices();
         InitializeVertexBuffers();
         InitializeIndirectArgsBuffer();
+
+        _isInitialized = true;
     }
 
     private void InitializeVertices()
@@ -65,7 +67,7 @@ public class ComputeShaderDispatcher : MonoBehaviour
         ComputeShader.SetBuffer(_kernelIndex, "DeformedVertices", _deformedVerticesBuffer);
 
         // this will let the surface shader access the buffer
-        _meshRenderer.material.SetBuffer("DeformedVertices", _deformedVerticesBuffer);
+        Material.SetBuffer("DeformedVertices", _deformedVerticesBuffer);
     }
 
     private void InitializeIndirectArgsBuffer()
@@ -95,6 +97,11 @@ public class ComputeShaderDispatcher : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!_isInitialized)
+        {
+            return;
+        }
+
         ComputeShader.SetFloat("Time", Time.time);
         ComputeShader.SetFloat("Radius", Radius);
         ComputeShader.SetFloat("Velocity", Velocity);
@@ -102,7 +109,7 @@ public class ComputeShaderDispatcher : MonoBehaviour
         Graphics.DrawMeshInstancedIndirect(
             mesh: _meshFilter.mesh,
             submeshIndex: 0,
-            material: _meshRenderer.material,
+            material: Material,
             bounds: _bounds,
             bufferWithArgs: _argsBuffer
         );
